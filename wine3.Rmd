@@ -1,0 +1,110 @@
+---
+title: "Wine Data Analysis Part III"
+date: "September 3, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(caTools)
+library(rpart)
+library(rpart.plot)
+library(randomForest)
+library(nnet)
+library(MASS)
+```
+
+## Introduction
+
+This is the last part of wine data analysis. In the [part I](https://rpubs.com/yl3413/205017) and [part II](https://rpubs.com/yl3413/206193), I have analyzed the difference between red wines and white wines and explored the relationship between each chemical properties and wine quality. In this part, I will build models to predict wine quality based on wine chemical properties. I choose ordinal logistic regression, decision tree, and random forest as my methods. In all of my models, I include all chemical properties as the independent variables.
+
+## Data Preparation
+
+I put wines into three groups based on wine quality. Wines with quality score less than 6 are grouped as 1, wines with quality score 6 are grouped as 2, and wines with quality score better than 6 are grouped as 3. Also, I split data into train data and test data to check the performance of my models.
+
+```{r data preparation}
+red <- read.csv("wineQualityReds.csv")
+white <- read.csv("wineQualityWhites.csv")
+red$X <- NULL
+white$X <- NULL
+red$category[red$quality<6] <- 1
+red$category[red$quality==6] <- 2
+red$category[red$quality>6] <- 3
+white$category[white$quality<6] <- 1
+white$category[white$quality==6] <- 2
+white$category[white$quality>6] <- 3
+red$category <- as.factor(red$category)
+white$category <- as.factor(white$category)
+set.seed(3000)
+spl = sample.split(red$category, SplitRatio = 0.7)
+redtrain = subset(red, spl==TRUE)
+redtest = subset(red, spl==FALSE)
+set.seed(3000)
+spl = sample.split(white$category, SplitRatio = 0.7)
+whitetrain = subset(white, spl==TRUE)
+whitetest = subset(white, spl==FALSE)
+```
+
+## Ordinal Logistic Regression
+
+```{r Ordinal Logistic Regression1}
+redordinal <- polr(category ~ fixed.acidity+volatile.acidity+citric.acid+residual.sugar+chlorides+free.sulfur.dioxide+total.sulfur.dioxide+density+pH+sulphates+alcohol, 
+                  data=redtrain)
+redordinalpred <- predict(redordinal, redtest, type="class")
+table(redordinalpred, redtest$category)
+```
+
+The accuracy rate of ordinal logistic regression model for red wines is (164+112+23)/479=0.6242171. 
+
+```{r Ordinal Logistic Regression2}
+whiteordinal <- polr(category ~ fixed.acidity+volatile.acidity+citric.acid+residual.sugar+chlorides+free.sulfur.dioxide+total.sulfur.dioxide+density+pH+sulphates+alcohol, 
+                   data=whitetrain)
+whiteordinalpred <- predict(whiteordinal, whitetest, type="class")
+table(whiteordinalpred, whitetest$category)
+```
+
+The accuracy rate of ordinal logistic regression model for white wines is (260+431+110)/1469=0.5452689.
+
+## Decision Tree Model
+
+```{r decision tree 1}
+redtree = rpart(category ~ fixed.acidity+volatile.acidity+citric.acid+residual.sugar+chlorides+free.sulfur.dioxide+total.sulfur.dioxide+density+pH+sulphates+alcohol, 
+                data=redtrain, method="class")
+redtreepred <- predict(redtree, redtest, type="class")
+table(redtreepred, redtest$category)
+```
+
+The accuracy rate of decision tree model for red wines is (153+109+31)/479=0.611691. 
+
+```{r decision tree 2}
+whitetree = rpart(category ~ fixed.acidity+volatile.acidity+citric.acid+residual.sugar+chlorides+free.sulfur.dioxide+total.sulfur.dioxide+density+pH+sulphates+alcohol, 
+                data=whitetrain, method="class")
+whitetreepred <- predict(whitetree, whitetest, type="class")
+table(whitetreepred, whitetest$category)
+```
+
+The accuracy rate of decision tree model for white wines is (264+444+113)/1469=0.5588836.
+
+## Random Forest Model
+
+```{r random forest model 1}
+redrf = randomForest(category ~ fixed.acidity+volatile.acidity+citric.acid+residual.sugar+chlorides+free.sulfur.dioxide+total.sulfur.dioxide+density+pH+sulphates+alcohol, 
+                     data=redtrain)
+redrfpred <- predict(redrf, redtest, type="class")
+table(redrfpred, redtest$category)
+```
+
+The accuracy rate of random forest model for red wines is (172+127+38)/479=0.7035491. 
+
+```{r random forest model 2}
+whiterf = randomForest(category ~ fixed.acidity+volatile.acidity+citric.acid+residual.sugar+chlorides+free.sulfur.dioxide+total.sulfur.dioxide+density+pH+sulphates+alcohol, 
+                     data=whitetrain)
+whiterfpred <- predict(whiterf, whitetest, type="class")
+table(whiterfpred, whitetest$category)
+```
+
+The accuracy rate of random forest model for white wines is (337+506+195)/1469=0.7066031.
+
+## Summary
+To make a long story short, random forest model is the best model to predict wine quality according to wine chemical properties, as the accuracy rates of both red wines and white wines exceed 0.7. However, in my study, I simplified the problem by sorting wine scores into three groups. To make more accurate prediction, such as predicting the exact score, we will need better models and the accuracy rates may decrease.
+
+Thanks for reading.

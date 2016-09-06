@@ -1,0 +1,161 @@
+---
+title: "Wine Data Analysis Part II"
+date: "September 2, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(dplyr)
+library(gridExtra)
+library(grid)
+red <- read.csv("wineQualityReds.csv")
+white <- read.csv("wineQualityWhites.csv")
+red$X <- NULL
+white$X <- NULL
+red$type <- "red"
+white$type <- "white"
+```
+
+## Introduction
+
+This is the part II of wine data analysis. In the [part I](https://rpubs.com/yl3413/205017), I have compared the difference between red wines and white wines in terms of chemical properties. In this part, I will analyze the relationship between each chemical property and wine quality score given by experts. Red wines and white wines are analyzed separately because I assume wine experts evaluate red wines and white wines based on different standards. 
+
+## Exploratory Data Analysis
+
+Let's first take a look at the correlations. The following table shows that correlations between each chemical property and quality for red wines. Alcohol, volatile acidity, sulphates and citric acid are the four chemical properties that have correlations larger than 0.2.
+
+```{r red wines cor, echo=FALSE}
+subset(cor(red[1:12]), select=c("quality"))
+```
+
+The following table shows that correlations between each chemical property and quality for white wines. Alcohol, density and chlorides are the three chemical properties that have correlations larger than 0.2.
+
+```{r white wines cor, echo=FALSE}
+subset(cor(white[1:12]), select=c("quality"))
+```
+
+I put data into ten groups evenly by proportion, 10% for each group. Then I calculate the average quality for each group and see if there is relationship. I wrote the following function to make my codes clear and succinct.
+
+```{r function}
+fun <- function(redchem, redquality, whitechem, whitequality) {
+  redfacut <- ntile(redchem, 10)
+  whitefacut <- ntile(whitechem, 10)
+  reddf <<- data.frame(red=tapply(redchem, redfacut, mean), 
+                        quality=tapply(redquality, redfacut, mean))
+  whitedf <<- data.frame(white=tapply(whitechem, whitefacut, mean), 
+                      quality=tapply(whitequality, whitefacut, mean))
+  redplot <<- ggplot(aes(x=red, y=quality, colour = I("#CC0000")), data = reddf) + geom_point() + geom_line() +
+    theme(legend.position="none", axis.title.x = element_text(colour = I("#CC0000"))) + 
+    xlab("red wine") + ylab("average quality")
+  whiteplot <<- ggplot(aes(x=white,y=quality, colour = I("#33CCFF")), data = whitedf) + geom_point() + geom_line() + 
+    theme(legend.position="none", axis.title.x = element_text(color = I("#33CCFF"))) + 
+    xlab("white wine") + ylab("average quality") 
+}
+```
+
+### Fixed Acidity
+
+```{r Fixed Acidity}
+fun(red$fixed.acidity, red$quality, white$fixed.acidity, white$quality)
+grid.arrange(redplot, whiteplot, ncol = 2, top = textGrob("Quality by Fixed Acidity",gp=gpar(fontsize=15,font=1)))
+print(cbind(reddf,whitedf)) 
+```
+
+Fixed acidity is positively related to quality for red wines, while the relationship is negative for white wines. However, both relationships are not very explicit. 
+
+### Volatile Acidity
+
+```{r Volatile Acidity}
+fun(red$volatile.acidity, red$quality, white$volatile.acidity, white$quality)
+grid.arrange(redplot, whiteplot, ncol = 2, top = textGrob("Quality by Volatile Acidity",gp=gpar(fontsize=15,font=1)))
+print(cbind(reddf,whitedf)) 
+```
+
+The relationship between volatile acidity and quality is more explicit, which are negatively related. This result makes sense because volatile acidity is the amount of acetic acid in wine, which at too high of levels can lead to an unpleasant, vinegar taste. So higher amount of volatile acidity leads to a lower score.
+
+### Citric Acid
+```{r Citric Acid}
+fun(red$citric.acid, red$quality, white$citric.acid, white$quality)
+grid.arrange(redplot, whiteplot, ncol = 2, top = textGrob("Quality by Citric Acid",gp=gpar(fontsize=15,font=1)))
+print(cbind(reddf,whitedf))
+```
+
+Citric acid is positively related to quality for red wines, while the relationship for white wines is hard to tell. 
+
+### Residual Sugar
+```{r Residual Sugar}
+fun(red$residual.sugar, red$quality, white$residual.sugar, white$quality)
+grid.arrange(redplot, whiteplot, ncol = 2, top = textGrob("Quality by Residual Sugar",gp=gpar(fontsize=15,font=1)))
+print(cbind(reddf,whitedf))
+```
+
+There is no obvious relationship between residual sugar and quality for both red wines and white wines.
+
+### Chlorides
+```{r Chlorides}
+fun(red$chlorides, red$quality, white$chlorides, white$quality)
+grid.arrange(redplot, whiteplot, ncol = 2, top = textGrob("Quality by Chlorides",gp=gpar(fontsize=15,font=1)))
+print(cbind(reddf,whitedf))
+```
+
+Chlorides is the amount of salt in the wine. Chlorides and quality appear a negative relationship for red and white wines. It seems like experts do not like salty wines.
+
+### Free Sulfur Dioxide
+```{r Free Sulfur Dioxide}
+fun(red$free.sulfur.dioxide, red$quality, white$free.sulfur.dioxide, white$quality)
+grid.arrange(redplot, whiteplot, ncol = 2, top = textGrob("Quality by Free Sulfur Dioxide",gp=gpar(fontsize=15,font=1)))
+print(cbind(reddf,whitedf))
+```
+
+There is no obvious relationship between free sulfur dioxide and quality for both red wines and white wines.
+
+### Total Sulfur Dioxide
+```{r Total Sulfur Dioxide}
+fun(red$total.sulfur.dioxide, red$quality, white$total.sulfur.dioxide, white$quality)
+grid.arrange(redplot, whiteplot, ncol = 2, top = textGrob("Quality by Total Sulfur Dioxide",gp=gpar(fontsize=15,font=1)))
+print(cbind(reddf,whitedf))
+```
+
+Total sulfur dioxide has a negative relationship to quality for red wines generally, while there is a similar relationship for white wines except the 0%-10% group. 
+
+### Density
+```{r Density}
+fun(red$density, red$quality, white$density, white$quality)
+grid.arrange(redplot, whiteplot, ncol = 2, top = textGrob("Quality by Density",gp=gpar(fontsize=15,font=1)))
+print(cbind(reddf,whitedf))
+```
+
+The density and quality show a negative linear relationship for both red wines and white wines.
+
+### pH
+```{r pH}
+fun(red$pH, red$quality, white$pH, white$quality)
+grid.arrange(redplot, whiteplot, ncol = 2, top = textGrob("Quality by pH",gp=gpar(fontsize=15,font=1)))
+print(cbind(reddf,whitedf))
+```
+
+The pH and quality do not show an obvious linear relationship for both red wines and white wines.
+
+### Sulphates
+```{r Sulphates}
+fun(red$sulphates, red$quality, white$sulphates, white$quality)
+grid.arrange(redplot, whiteplot, ncol = 2, top = textGrob("Quality by Sulphates",gp=gpar(fontsize=15,font=1)))
+print(cbind(reddf,whitedf))
+```
+
+The suplates and quality shows a positive relationship for red wines, except the 90%-100% group, while the suplates and quality do not show any linear relationship for white wines.
+
+### Alcohol
+```{r Alcohol}
+fun(red$alcohol, red$quality, white$alcohol, white$quality)
+grid.arrange(redplot, whiteplot, ncol = 2, top = textGrob("Quality by Alcohol",gp=gpar(fontsize=15,font=1)))
+print(cbind(reddf,whitedf))
+```
+
+The result clearly shows that alcohol and quality are positively related for both red and white wines.
+
+In the next part, I will test different models to predict wine quality based on chemical properties.
+
+Thanks for reading.

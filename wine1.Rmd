@@ -1,0 +1,339 @@
+---
+title: "Wine Data Analysis Part I"
+date: "August 28, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(gridExtra)
+library(grid)
+red <- read.csv("wineQualityReds.csv")
+white <- read.csv("wineQualityWhites.csv")
+red$X <- NULL
+white$X <- NULL
+red$type <- "red"
+white$type <- "white"
+wine <- rbind(red,white)
+```
+
+## Introduction
+
+In this study I am going to analyze some wine data created by Paulo Cortez (Univ. Minho), Antonio Cerdeira, Fernando Almeida, Telmo Matos and Jose Reis (CVRVV). They published two datasets related to red and white variants of the Portuguese "Vinho Verde" wine. I combined them into one dataset and added column "type" for wine type-red or white. 
+
+The dataset includes 12 variables and 6497 observations, which contains 1599 red wines and 4898 white wines. 11 input variables are the chemical properties of the wine. 1 output variable is the score given by at least 3 wine experts rated the quality of each wine, providing a rating between 0 (very bad) and 10 (very excellent).
+
+This study includes two parts. In the first part, I am going to compare red wines and white wines to see what is difference between red wines and white wines in terms of chemical properties. In the second part, I will explore which chemical properties influence the quality of wines and build models to predict quality score based on chemical properties. 
+
+## Exploratory Data Analysis
+
+### Fixed Acidity
+
+The first chemical property I look into is fixed acidity, which is most acids involved with wine or fixed or nonvolatile (do not evaporate readily). I draw two plots to show distribution of the data and summary statistics.
+
+```{r fixed.acidity, echo=FALSE, warning=FALSE, message=FALSE}
+
+fixed.acidity.histogram <- ggplot(aes(x=fixed.acidity, fill = type), data=wine) + geom_histogram() + 
+  scale_x_continuous(limits = c(3, 16)) + 
+  facet_wrap(~type, scales="free_y", ncol=1) + 
+  theme(legend.position="none") + 
+  xlab("fixed acidity (tartaric acid - g / dm^3)")
+
+fixed.acidity.boxplot <- ggplot(aes(x=type, y=fixed.acidity, fill=type), data=wine) + geom_boxplot() + 
+  theme(legend.position="none") + 
+  ylab("fixed acidity")
+
+grid.arrange(fixed.acidity.histogram, fixed.acidity.boxplot, ncol = 2, 
+             top = textGrob("Difference in Fixed Acidity",gp=gpar(fontsize=15,font=1)))
+
+tapply(wine$fixed.acidity, wine$type, summary)
+
+```
+
+From the plots and data, we can tell that the fixed acidity in red wines is fairly higher than that in white wines. The fixed acidity in white wines is more stable, while some red wines include very high fixed acidity.
+
+### Volatile Acidity
+
+Volatile acidity is the amount of acetic acid in wine, which at too high of levels can lead to an unpleasant, vinegar taste.
+
+```{r volatile.acidity, echo=FALSE, warning=FALSE, message=FALSE}
+
+volatile.acidity.histogram <- ggplot(aes(x=volatile.acidity, fill = type), data=wine) + 
+  geom_histogram() + 
+  scale_x_continuous(limits = c(0, 2)) + 
+  facet_wrap(~type, scales="free_y", ncol=1) + 
+  theme(legend.position="none") + 
+  xlab("volatile acidity (acetic acid - g / dm^3)")
+
+volatile.acidity.boxplot <- ggplot(aes(x=type, y=volatile.acidity, fill=type), data=wine) + 
+  geom_boxplot() + theme(legend.position="none") + 
+  ylab("volatile acidity")
+
+grid.arrange(volatile.acidity.histogram, volatile.acidity.boxplot, ncol = 2,
+             top = textGrob("Difference in Volatile Acidity",gp=gpar(fontsize=15,font=1)))
+
+tapply(wine$volatile.acidity, wine$type, summary)
+
+```
+
+Like fixed acidity, volatile acidity of white wines is more stable while the level of red wines is higher. Both red wines and white wines have some outliers which have high level volatile acidity. 
+
+### Citric Acid
+
+Citric acid can add 'freshness' and flavor to wines, which is found in small quantities.
+
+```{r citric.acid, echo=FALSE, warning=FALSE, message=FALSE}
+
+citric.acid.histogram <- ggplot(aes(x=citric.acid, fill = type), data=wine) + geom_histogram() + 
+  scale_x_continuous(limits = c(0, 2)) + 
+  facet_wrap(~type, scales="free_y", ncol=1) + 
+  theme(legend.position="none") + 
+  xlab("citric acid (g / dm^3)")
+
+citric.acid.boxplot <- ggplot(aes(x=type, y=citric.acid, fill=type), data=wine) + geom_boxplot() + 
+  theme(legend.position="none") + 
+  ylab("citric acid")
+
+grid.arrange(citric.acid.histogram, citric.acid.boxplot, ncol = 2, 
+             top = textGrob("Difference in Citric Acid",gp=gpar(fontsize=15,font=1)))
+
+tapply(wine$citric.acid, wine$type, summary)
+```
+
+The citric acid of red wines is evenly distributed white that of white wines is normally distributed. White wines also have some outliers.
+
+### Residual Sugar
+
+Residual sugar is the amount of sugar remaining after fermentation stops, it's rare to find wines with less than 1 gram/liter and wines with greater than 45 grams/liter are considered sweet
+
+```{r residual.sugar, echo=FALSE, warning=FALSE, message=FALSE}
+residual.sugar.histogram <- ggplot(aes(x=residual.sugar, fill = type), data=wine) + geom_histogram() + 
+  scale_x_continuous(limits = c(0, 25)) + 
+  facet_wrap(~type, scales="free_y", ncol=1) + 
+  theme(legend.position="none") + 
+  xlab("residual sugar (g / dm^3)")
+
+residual.sugar.boxplot <- ggplot(aes(x=type, y=residual.sugar, fill = type), data=wine) + geom_boxplot()+ 
+  theme(legend.position="none") + 
+  ylab("residual sugar")
+
+grid.arrange(residual.sugar.histogram, residual.sugar.boxplot, ncol = 2, 
+             top = textGrob("Difference in Residual Sugar",gp=gpar(fontsize=15,font=1)))
+
+tapply(wine$residual.sugar, wine$type, summary)
+
+```
+
+The amount of average sugar in white wines is much higher than that in red wines. This is probably the most common difference that normal people can tell because white wines usually taste sweeter. The sweetness of red wines is almost fixed except several outliers, and the sweetness of white wines ranges from 0 to 65 g/dm^3^. Most white wines are sweeter than red wines.
+
+### Chlorides
+
+Chlorides is the amount of salt in the wine.
+
+```{r chlorides, echo=FALSE, warning=FALSE, message=FALSE}
+
+chlorides.histogram <- ggplot(aes(x=chlorides, fill = type), data=wine) + geom_histogram() + 
+  scale_x_continuous(limits = c(0, 0.3)) + 
+  facet_wrap(~type, scales="free_y", ncol=1) + 
+  theme(legend.position="none") + 
+  xlab("chlorides (sodium chloride - g / dm^3)")
+
+chlorides.boxplot <- ggplot(aes(x=type, y=chlorides, fill = type), data=wine) + geom_boxplot()+ 
+  theme(legend.position="none") + 
+  ylab("chlorides")
+
+grid.arrange(chlorides.histogram, chlorides.boxplot, ncol = 2, 
+             top = textGrob("Difference in Chlorides",gp=gpar(fontsize=15,font=1)))
+
+tapply(wine$chlorides, wine$type, summary)
+
+```
+
+In general red wines contain more salt than white wines. The distribution of chlorides in both wines is very similar, and both wines have some outliers.
+
+### Free Sulfur Dioxide
+
+Free sulfur dioxide is the free form of SO2 exists in equilibrium between molecular SO2 (as a dissolved gas) and bisulfite ion. It prevents microbial growth and the oxidation of wine.
+
+```{r free.sulfur.dioxide, echo=FALSE, warning=FALSE, message=FALSE}
+
+free.sulfur.dioxide.histogram <- ggplot(aes(x=free.sulfur.dioxide, fill = type), data=wine) + geom_histogram() + 
+  scale_x_continuous(limits = c(0, 100)) + 
+  facet_wrap(~type, scales="free_y", ncol=1) + 
+  theme(legend.position="none") + 
+  xlab("free sulfur dioxide (mg / dm^3)")
+
+free.sulfur.dioxide.boxplot <- ggplot(aes(x=type, y=free.sulfur.dioxide, fill=type), data=wine) +
+  geom_boxplot() + theme(legend.position="none") + 
+  ylab("free sulfur dioxide")
+
+grid.arrange(free.sulfur.dioxide.histogram, free.sulfur.dioxide.boxplot, ncol = 2, 
+             top = textGrob("Difference in Free Sulfur Dioxide",gp=gpar(fontsize=15,font=1)))
+
+tapply(wine$free.sulfur.dioxide, wine$type, summary)
+
+```
+
+The distribution of free sulfur dioxide of red wines is posited skewed, while the distribution of white wines is normal. In general the white wines include more free sulfur dioxide than the red wines.
+
+### Total Sulfur Dioxide
+
+Total sulfur dioxide is amount of free and bound forms of S02; in low concentrations, SO2 is mostly undetectable in wine, but at free SO2 concentrations over 50 ppm, SO2 becomes evident in the nose and taste of wine
+
+```{r total.sulfur.dioxide, echo=FALSE, warning=FALSE, message=FALSE}
+
+total.sulfur.dioxide.histogram <- ggplot(aes(x=total.sulfur.dioxide, fill = type), data=wine) + 
+  geom_histogram() + 
+  scale_x_continuous(limits = c(0, 300)) + 
+  facet_wrap(~type, scales="free_y", ncol=1) + 
+  theme(legend.position="none") + 
+  xlab("total sulfur dioxide (mg / dm^3)")
+
+total.sulfur.dioxide.boxplot <- ggplot(aes(x=type, y=total.sulfur.dioxide, fill=type), data=wine) +
+  geom_boxplot() + 
+  theme(legend.position="none") + 
+  ylab("total sulfur dioxide")
+
+grid.arrange(total.sulfur.dioxide.histogram, total.sulfur.dioxide.boxplot, ncol = 2, 
+             top = textGrob("Difference in Total Sulfur Dioxide",gp=gpar(fontsize=15,font=1)))
+
+tapply(wine$total.sulfur.dioxide, wine$type, summary)
+
+```
+
+
+Since free sulfur dioxide is part of total sulfur dioxide, the distribution and statistics of total sulfur dioxide is very similar to free sulfur dioxide.
+
+### Density
+
+The density of water is close to that of water depending on the percent alcohol and sugar content.
+
+```{r density, echo=FALSE, warning=FALSE, message=FALSE}
+
+density.histogram <- ggplot(aes(x=density, fill = type), data=wine) + geom_histogram() + 
+  scale_x_continuous(limits = c(0.98, 1.04), breaks = seq(0.98, 1.04, 0.02)) + 
+  facet_wrap(~type, scales="free_y", ncol=1) + 
+  theme(legend.position="none") + 
+  xlab("density (g / cm^3)")
+
+density.boxplot <- ggplot(aes(x=type, y=density, fill=type), data=wine) + geom_boxplot() + 
+  theme(legend.position="none") 
+
+grid.arrange(density.histogram, density.boxplot, ncol = 2, 
+             top = textGrob("Difference in Density",gp=gpar(fontsize=15,font=1)))
+
+tapply(wine$density, wine$type, summary)
+
+```
+
+The density of red wines and white wines is very close. The density of red wines is a little bit higher than that of white wines.
+
+### pH
+
+pH describes how acidic or basic a wine is on a scale from 0 (very acidic) to 14 (very basic); most wines are between 3-4 on the pH scale.
+
+```{r pH, echo=FALSE, warning=FALSE, message=FALSE}
+
+pH.histogram <- ggplot(aes(x=pH, fill = type), data=wine) + geom_histogram(binwidth = 0.05) + 
+  scale_x_continuous(limits = c(2.5, 4.5), breaks = seq(2.5, 4.5, 0.5)) + 
+  facet_wrap(~type, scales="free_y", ncol=1) +  
+  theme(legend.position="none")
+
+pH.boxplot <- ggplot(aes(x=type, y=pH, fill=type), data=wine) + geom_boxplot()+ 
+  theme(legend.position="none")
+
+grid.arrange(pH.histogram, pH.boxplot, ncol = 2, 
+             top = textGrob("Difference in pH",gp=gpar(fontsize=15,font=1)))
+
+tapply(wine$pH, wine$type, summary)
+
+```
+
+The pH of red wines and white wines are both normal distribution, white the overall pH of red wines is a little bit higher than the white wines.
+
+### Sulphates
+
+Sulphates is a wine additive which can contribute to sulfur dioxide gas (S02) levels, which acts as an antimicrobial and antioxidant.
+
+```{r sulphates, echo=FALSE, warning=FALSE, message=FALSE}
+
+sulphates.histogram <- ggplot(aes(x=sulphates, fill = type), data=wine) + geom_histogram() + 
+  scale_x_continuous(limits = c(0, 2)) + 
+  facet_wrap(~type, scales="free_y", ncol=1) + 
+  theme(legend.position="none") + 
+  xlab("sulphates (potassium sulphate - g / dm3)")
+
+sulphates.boxplot <- ggplot(aes(x=type, y=sulphates, fill = type), data=wine) + geom_boxplot()+ 
+  theme(legend.position="none")
+
+grid.arrange(sulphates.histogram, sulphates.boxplot, ncol = 2, 
+             top = textGrob("Difference in Sulphates",gp=gpar(fontsize=15,font=1)))
+
+tapply(wine$sulphates, wine$type, summary)
+
+```
+
+The sulphates in red wines and white wines are very similar, although red wines include a little bit more sulphates than white wines. Red wines also have some outliers.
+
+### Alcohol
+
+Alcohol is the percent alcohol content of the wine.
+
+```{r alcohol, echo=FALSE, warning=FALSE, message=FALSE}
+
+alcohol.histogram <- ggplot(aes(x=alcohol, fill = type), data=wine) + geom_histogram(binwidth = 0.5) + 
+  scale_x_continuous(limits = c(8, 15), breaks = seq(8, 15, 1)) + 
+  facet_wrap(~type, scales="free_y", ncol=1)+ 
+  theme(legend.position="none") + 
+  xlab("alcohol (% by volume)")
+
+alcohol.boxplot <- ggplot(aes(x=type, y=alcohol, fill=type), data=wine) + geom_boxplot()+ 
+  theme(legend.position="none")
+
+grid.arrange(alcohol.histogram, alcohol.boxplot, ncol = 2, 
+             top = textGrob("Difference in Alcohol",gp=gpar(fontsize=15,font=1)))
+
+tapply(wine$alcohol, wine$type, summary)
+
+```
+
+The alcohol level of red wines and white wines are very close except red wines have some outliers.
+
+### Quality
+
+```{r quality, echo=FALSE, warning=FALSE, message=FALSE}
+
+quality.histogram <- ggplot(aes(x=quality, fill = type), data=wine) + geom_histogram(binwidth = 1) + 
+  scale_x_continuous(limits = c(0, 10), breaks = seq(0, 10, 1)) + 
+  facet_wrap(~type, scales="free_y", ncol=1)+ 
+  theme(legend.position="none") + 
+  xlab("quality (score between 0 and 10)")
+
+quality.boxplot <- ggplot(aes(x=type, y=quality, fill=type), data=wine) + geom_boxplot()+ 
+  theme(legend.position="none")
+
+grid.arrange(quality.histogram, quality.boxplot, ncol = 2, 
+             top = textGrob("Difference in Quality",gp=gpar(fontsize=15,font=1)))
+
+tapply(wine$quality, wine$type, summary)
+
+```
+
+Most wines, red and white, scored 5 or 6. Only several wines have low or high score, such as 3 or 8.
+
+Finally, one more intertesing plot to wrap up part I. In the graph below, it is clear that red wines locate in the top-right corner since red wines have higher volatile acidity and chlorides.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+ggplot(aes(x=volatile.acidity, y=chlorides, color=type), data = wine) + 
+  geom_jitter(alpha=0.5) + 
+  scale_x_continuous(limits = c(0, 1.2)) +
+  scale_y_continuous(limits = c(0, 0.15)) + 
+  ggtitle("Volatile Acidity and Chlorides by Red and White Wines") + 
+  xlab("volatile acidity (acetic acid - g / dm^3)") + 
+  ylab("chlorides (sodium chloride - g / dm^3)")
+
+```
+
+Thanks for reading.
