@@ -1,3 +1,2 @@
 # Wine Data Analysis
-This is the Github repository for wine data analysis, which includes three parts. To see the complete Rpubs publications, please 
-go to my Rpubs webpages: [Part I](https://rpubs.com/yl3413/205017), [Part II](https://rpubs.com/yl3413/206193), [Part III](https://rpubs.com/yl3413/206313).
+This is the Github repository for wine data analysis, which includes three parts. Part I includes an analysis on the difference between red wines and white wines in terms of chemical properties. Part II explores that relationship between each chemical property and wine quality. Part III builds models to estimate wine quality based on wine's chemical properties. To see the complete Rpubs publications, please go to my Rpubs webpages: [Part I](https://rpubs.com/yl3413/205017), [Part II](https://rpubs.com/yl3413/206193), [Part III](https://rpubs.com/yl3413/206313).
